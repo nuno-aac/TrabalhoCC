@@ -10,6 +10,7 @@ public class AnonGW {
         String capitalizedSentence;
         ServerSocket welcomeSocket = new ServerSocket(6789);
 
+
         while (true) {
             Socket connectionSocket = welcomeSocket.accept();
             BufferedReader inFromClient =
