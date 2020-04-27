@@ -1,25 +1,31 @@
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class AnonGW {
-    public static void main(String argv[]) throws Exception {
-        String clientSentence;
-        String capitalizedSentence;
-        ServerSocket welcomeSocket = new ServerSocket(6789);
+    String clientInput;
+    private ServerSocket welcomeSocket;
+    private Socket goodbyeSocket;
 
-
-        while (true) {
-            Socket connectionSocket = welcomeSocket.accept();
-            BufferedReader inFromClient =
-                    new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-            DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-            clientSentence = inFromClient.readLine();
-            System.out.println("Received: " + clientSentence);
-            capitalizedSentence = clientSentence.toUpperCase() + 'n';
-            outToClient.writeBytes(capitalizedSentence);
+    public AnonGW(){
+        try {
+            welcomeSocket = new ServerSocket(12345);
+            goodbyeSocket = new Socket("127.0.0.1", 12345);
+        } catch(IOException e){
+            System.out.println(Arrays.toString(e.getStackTrace()));
         }
+    }
+    public void gwStart() throws Exception {
+
+        while (welcomeSocket != null) {
+            Socket clientSocket = welcomeSocket.accept();
+            BufferedReader inFromClient =
+                    new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter outToServer = new PrintWriter(goodbyeSocket.getOutputStream());
+            clientInput = inFromClient.readLine();
+            outToServer.println("Received: " + clientInput);
+        }
+
     }
 }
