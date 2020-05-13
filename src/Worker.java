@@ -25,11 +25,18 @@ public class Worker implements Runnable {
         }
     }
 
-
+    private void closeStreams() throws IOException{
+        inFromClient.close();
+        outToServer.close();
+        inFromServer.close();
+        outToClient.close();
+        clientSocket.close();
+    }
 
     @Override
     public void run() {
         int result, i;
+        i = 0;
         byte[] currentByte = new byte[1];
         byte[] bytesFromClient = new byte[1024];
         byte[] fileArray;
@@ -38,9 +45,10 @@ public class Worker implements Runnable {
             for (int j = 0; j < result; j++) {
                 System.out.print((char) bytesFromClient[j]);
             }
+
             outToServer.write(bytesFromClient, 0, result); // SEND REQUEST TO SERVER
             outToServer.flush();
-            i = 0;// SEND REQUEST TO SERVER
+
             responseFromServer = new ArrayList<>(); // GET RESPONSE FROM SERVER
             while ((result = inFromServer.read(currentByte, 0, 1)) > -1) {
                 responseFromServer.add(currentByte[0]);
@@ -51,13 +59,11 @@ public class Worker implements Runnable {
                 fileArray[i] = b;
                 i++;
             }
+
             outToClient.write(fileArray, 0, responseFromServer.size());/// SEND RESPONSE TO CLIENT
             outToClient.flush();
-            inFromClient.close();
-            outToServer.close();
-            inFromServer.close();
-            outToClient.close();
-            clientSocket.close();
+
+            closeStreams();
         } catch (IOException e){
             e.printStackTrace();
         }
