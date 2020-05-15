@@ -12,7 +12,7 @@ public class AnonGW {
     ArrayList<Thread> workers;
     private static final int PORT_NUM = 80;
 
-    boolean parseArgs(String[] args){
+    private boolean parseArgs(String[] args){
         targetServer = null;
         peers = new ArrayList<>();
         for(int i = 1; i < args.length; i++){
@@ -49,6 +49,7 @@ public class AnonGW {
     public void gwStart() throws Exception {
         while (welcomeSocket != null) {
             Socket clientSocket = welcomeSocket.accept();
+
             Thread t = new Thread(new Worker(clientSocket, goodbyeSocket));
             workers.add(t);
             t.start();
