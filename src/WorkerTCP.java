@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -5,28 +6,34 @@ import java.net.*;
 import java.util.ArrayList;
 
 public class WorkerTCP implements Runnable {
-    Socket clientSocket, serverSocket;
+    Socket clientSocket;
     DatagramSocket anonSocket;
-    ArrayList<Byte> responseFromServer;
+    InetAddress udpAddress;
+    int sessionID;
     //TCP
-    DataInputStream inFromClient, inFromServer;
-    DataOutputStream outToServer, outToClient;
-    //UDP
+    DataInputStream inFromClient;
+    DataOutputStream outToClient;
+    //TABLE
+    Table table;
     byte buf[] = new byte[1024];
 
-    WorkerTCP(Socket clSocket, Socket svSocket){
+    WorkerTCP(Socket clSocket, String peerAddress, Table t, int sID){
         clientSocket = clSocket;
-        serverSocket = svSocket;
+        table = t;
+        sessionID = sID;
         try {
-            anonSocket = new DatagramSocket(80);
+            udpAddress = InetAddress.getByName(peerAddress);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        try {
+            anonSocket = new DatagramSocket(6666);
         } catch (SocketException e) {
             e.printStackTrace();
         }
 
         try {
             inFromClient = new DataInputStream(clientSocket.getInputStream());
-            inFromServer = new DataInputStream(serverSocket.getInputStream());
-            outToServer = new DataOutputStream(serverSocket.getOutputStream());
             outToClient = new DataOutputStream(clientSocket.getOutputStream());
         } catch ( IOException e ) {
             e.printStackTrace();
@@ -35,8 +42,6 @@ public class WorkerTCP implements Runnable {
 
     private void closeStreams() throws IOException{
         inFromClient.close();
-        outToServer.close();
-        inFromServer.close();
         outToClient.close();
         clientSocket.close();
     }
@@ -49,33 +54,15 @@ public class WorkerTCP implements Runnable {
         byte[] bytesFromClient = new byte[4096];
         byte[] fileArray;
         try {
+            String clientIP = clientSocket.getInetAddress().toString();
+            table.addToTable(sessionID, new TableEntry(clientSocket,udpAddress,sessionID));
             result = inFromClient.read(bytesFromClient, 0, 1024); // GET REQUEST FROM CLIENT
             for (int j = 0; j < result; j++) {
                 System.out.print((char) bytesFromClient[j]);
             }
-
-            InetAddress address = InetAddress.getByName("10.3.3.1"); //MUDARRRRRRR
-            DatagramPacket dp = new DatagramPacket(bytesFromClient, result, address, 80);
+            //ADD HEADER
+            DatagramPacket dp = new DatagramPacket(bytesFromClient, result, udpAddress, 6666); //MUDARRRRRRR // SEND REQUEST TO PEER
             anonSocket.send(dp);
-            //outToServer.write(bytesFromClient, 0, result); // SEND REQUEST TO SERVER
-            //outToServer.flush();
-
-
-            DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            anonSocket.receive(packet);
-            /*responseFromServer = new ArrayList<>(); // GET RESPONSE FROM SERVER
-            while ((result = inFromServer.read(currentByte, 0, 1)) > -1) {
-                responseFromServer.add(currentByte[0]);
-                System.out.print((char) currentByte[0]);
-            }
-            fileArray = new byte[responseFromServer.size()];
-            for (byte b : responseFromServer) {
-                fileArray[i] = b;
-                i++;
-            }*/
-
-            outToClient.write(buf, 0, responseFromServer.size());// SEND RESPONSE TO CLIENT
-            outToClient.flush();
 
             closeStreams();
         } catch (IOException e){

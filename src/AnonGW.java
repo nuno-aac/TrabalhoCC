@@ -1,4 +1,5 @@
 import java.io.*;
+import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public class AnonGW {
     public void gwStart() throws Exception {
         while (welcomeSocket != null) {
             Socket clientSocket = welcomeSocket.accept();
+            DatagramSocket anonSocket = new DatagramSocket(6666);
 
             Thread t = new Thread(new Worker(clientSocket, goodbyeSocket));
             workers.add(t);
