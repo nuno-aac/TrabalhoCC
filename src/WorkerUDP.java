@@ -1,6 +1,4 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 
@@ -16,8 +14,12 @@ public class WorkerUDP implements Runnable {
     //UDP
     byte buf[] = new byte[1024];
 
-    WorkerUDP(Socket svSocket, DatagramSocket udpSocket, DatagramPacket p, Table t){
-        serverSocket = svSocket;
+    WorkerUDP(String svIP, DatagramSocket udpSocket, DatagramPacket p, Table t){
+        try {
+            serverSocket = new Socket(svIP,80);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         anonSocket = udpSocket;
         table = t;
 
@@ -38,6 +40,9 @@ public class WorkerUDP implements Runnable {
         byte[] fileArray;
         try {
             //IR BUSCAR A HEADER ENDEREÇO UDP DE ANON
+            ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
+            AnonPacket anonPacket = (AnonPacket) iStream.readObject();
+            iStream.close();
             InetAddress sourceAnonAdress = null;
             int destSessionID = 0;
             TableEntry entry = table.getFromTable(destSessionID);
@@ -48,7 +53,7 @@ public class WorkerUDP implements Runnable {
                 } catch ( IOException e ) {
                     e.printStackTrace();
                 }
-                outStream.write(packet.getData(), 0, packet.getData().length);// SEND REQUEST TO SERVER
+                outStream.write(anonPacket.getData(), 0, anonPacket.getData().length);// SEND REQUEST TO SERVER
                 outStream.flush();
 
                 responseFromServer = new ArrayList<>(); // GET RESPONSE FROM SERVER
@@ -62,7 +67,7 @@ public class WorkerUDP implements Runnable {
                     i++;
                 }
                 //ADD HEADER
-                DatagramPacket dp = new DatagramPacket(fileArray, result, sourceAnonAdress, 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
+                DatagramPacket dp = new DatagramPacket(fileArray, result, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
                 anonSocket.send(dp);
             } else {
                 try {
@@ -71,13 +76,13 @@ public class WorkerUDP implements Runnable {
                 } catch ( IOException e ) {
                     e.printStackTrace();
                 }
-                outStream.write(packet.getData(), 0, packet.getData().length);// SEND REQUEST TO SERVER
+                outStream.write(anonPacket.getData(), 0, anonPacket.getData().length);// SEND REQUEST TO SERVER
                 outStream.flush();
             }
 
 
             closeStreams();
-        } catch (IOException e){
+        } catch (IOException | ClassNotFoundException e){
             e.printStackTrace();
         }
     }

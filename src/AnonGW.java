@@ -7,31 +7,35 @@ import java.util.Arrays;
 
 public class AnonGW {
     private ServerSocket welcomeSocket;
-    private Socket goodbyeSocket;
     private String targetServer;
     ArrayList<String> peers;
-    ArrayList<Thread> workers;
+    Table table;
     private static final int PORT_NUM = 80;
 
     private boolean parseArgs(String[] args){
         targetServer = null;
         peers = new ArrayList<>();
-        for(int i = 1; i < args.length; i++){
+        for(int i = 0; i < args.length; i++){
             switch(args[i]){
                 case "-sv" :
+                    System.out.println("Found -sv it's " + args[i+1]);
                     targetServer = args[i+1];
-                    i++;
+                    i ++;
                     break;
                 case "-peers" :
-                    while(!args[i + 1].equals("-sv") && !args[i + 1].equals("-peers")){
+                    while(i+1 != args.length && !args[i + 1].equals("-sv") && !args[i + 1].equals("-peers")){
+                        System.out.println("Found -peer it's " + args[i+1]);
                         peers.add(args[i+1]);
                         i++;
                     }
                     break;
                 default:
                     System.out.println("Argumento desconhecido: " + args[i]);
+                    break;
             }
         }
+        System.out.println("Target Server: > " + targetServer + " <");
+        System.out.println("Peers: > " + peers + " <");
         return (targetServer != null && peers.size() != 0);
     }
 
@@ -39,7 +43,7 @@ public class AnonGW {
         if(parseArgs(args)) {
             try {
                 welcomeSocket = new ServerSocket(PORT_NUM);
-                goodbyeSocket = new Socket(targetServer, PORT_NUM);
+                table = new Table();
             } catch (IOException e) {
                 System.out.println(Arrays.toString(e.getStackTrace()));
             }
@@ -48,13 +52,11 @@ public class AnonGW {
         }
     }
     public void gwStart() throws Exception {
-        while (welcomeSocket != null) {
-            Socket clientSocket = welcomeSocket.accept();
-            DatagramSocket anonSocket = new DatagramSocket(6666);
-
-            Thread t = new Thread(new Worker(clientSocket, goodbyeSocket));
-            workers.add(t);
-            t.start();
-        }
+        ListenTCPThread tcp = new ListenTCPThread(welcomeSocket,peers,table);
+        ListenUDPThread udp = new ListenUDPThread(targetServer,table);
+        Thread tcpThread = new Thread(tcp);
+        Thread udpThread = new Thread(udp);
+        tcpThread.start();
+        udpThread.start();
     }
 }

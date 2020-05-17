@@ -1,7 +1,5 @@
 import javax.swing.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 
@@ -54,14 +52,22 @@ public class WorkerTCP implements Runnable {
         byte[] bytesFromClient = new byte[4096];
         byte[] fileArray;
         try {
-            String clientIP = clientSocket.getInetAddress().toString();
-            table.addToTable(sessionID, new TableEntry(clientSocket,udpAddress,sessionID));
+            table.addToTable(sessionID, new TableEntry(clientSocket,udpAddress,sessionID));// ADD SOCKET TO TABLE
+
             result = inFromClient.read(bytesFromClient, 0, 1024); // GET REQUEST FROM CLIENT
             for (int j = 0; j < result; j++) {
                 System.out.print((char) bytesFromClient[j]);
             }
             //ADD HEADER
-            DatagramPacket dp = new DatagramPacket(bytesFromClient, result, udpAddress, 6666); //MUDARRRRRRR // SEND REQUEST TO PEER
+            AnonPacket packet = new AnonPacket(bytesFromClient, sessionID, sessionID,0);
+            ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+            ObjectOutput oo = new ObjectOutputStream(bStream);
+            oo.writeObject(packet);
+            oo.close();
+
+            byte[] bytePacket = bStream.toByteArray();
+
+            DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, udpAddress, 6666); //// SEND REQUEST TO PEER
             anonSocket.send(dp);
 
             closeStreams();
