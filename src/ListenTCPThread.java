@@ -6,14 +6,16 @@ import java.util.ArrayList;
 
 public class ListenTCPThread implements Runnable{
     ServerSocket welcomeSocket;
+    DatagramSocket anonSocket;
     ArrayList<String> peers;
     ArrayList<Thread> workers;
     Table table;
     int sessionID;
     DatagramSocket anonSocket;
 
-    public ListenTCPThread(ServerSocket serverSocket, ArrayList<String> peerList, Table t, DatagramSocket anonSocket){
+    public ListenTCPThread(ServerSocket serverSocket, ArrayList<String> peerList, Table t, DatagramSocket udpSocket){
         welcomeSocket = serverSocket;
+        anonSocket = udpSocket;
         peers = peerList;
         table = t;
         workers = new ArrayList<>();

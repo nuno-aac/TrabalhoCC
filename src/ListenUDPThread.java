@@ -6,13 +6,15 @@ public class ListenUDPThread implements Runnable{
     String serverSocket;
     byte buf[];
     Table table;
+    DatagramSocket anonSocket;
     ArrayList<Thread> workers;
     DatagramSocket anonSocket;
 
-    public ListenUDPThread(String targetServer, Table t, DatagramSocket anonSocket){
+    public ListenUDPThread(String targetServer, Table t, DatagramSocket udpSocket){
         serverSocket = targetServer;
         table = t;
-        buf = new byte[10240];
+        anonSocket = udpSocket;
+        buf = new byte[1024];
         workers = new ArrayList<>();
 	this.anonSocket = anonSocket;
     }

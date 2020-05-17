@@ -15,7 +15,7 @@ public class WorkerTCP implements Runnable {
     Table table;
     byte buf[] = new byte[1024];
 
-    WorkerTCP(Socket clSocket, String peerAddress, Table t, int sID, DatagramSocket anonSocket){
+    WorkerTCP(Socket clSocket, String peerAddress, Table t, int sID, DatagramSocket udpSocket){
         clientSocket = clSocket;
 	this.anonSocket = anonSocket;
         table = t;
@@ -25,6 +25,7 @@ public class WorkerTCP implements Runnable {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+        anonSocket = udpSocket;
         try {
             inFromClient = new DataInputStream(clientSocket.getInputStream());
             //outToClient = new DataOutputStream(clientSocket.getOutputStream());
@@ -61,7 +62,7 @@ public class WorkerTCP implements Runnable {
             DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, udpAddress, 6666); //// SEND REQUEST TO PEER
             anonSocket.send(dp);
 	    System.out.println("packet enviado");
-	
+
         } catch (IOException e){
             e.printStackTrace();
         }
