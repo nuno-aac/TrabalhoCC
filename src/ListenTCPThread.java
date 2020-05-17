@@ -10,12 +10,14 @@ public class ListenTCPThread implements Runnable{
     ArrayList<Thread> workers;
     Table table;
     int sessionID;
+    DatagramSocket anonSocket;
 
-    public ListenTCPThread(ServerSocket serverSocket, ArrayList<String> peerList, Table t){
+    public ListenTCPThread(ServerSocket serverSocket, ArrayList<String> peerList, Table t, DatagramSocket anonSocket){
         welcomeSocket = serverSocket;
         peers = peerList;
         table = t;
         workers = new ArrayList<>();
+	this.anonSocket = anonSocket;
     }
     @Override
     public void run() {
@@ -28,7 +30,7 @@ public class ListenTCPThread implements Runnable{
                 e.printStackTrace();
             }
 
-            Thread t = new Thread(new WorkerTCP(clientSocket,peers.get(0), table, sessionID));
+            Thread t = new Thread(new WorkerTCP(clientSocket,peers.get(0), table, sessionID, anonSocket));
             sessionID++;
             workers.add(t);
             t.start();

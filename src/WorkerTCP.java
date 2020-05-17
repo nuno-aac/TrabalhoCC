@@ -15,8 +15,9 @@ public class WorkerTCP implements Runnable {
     Table table;
     byte buf[] = new byte[1024];
 
-    WorkerTCP(Socket clSocket, String peerAddress, Table t, int sID){
+    WorkerTCP(Socket clSocket, String peerAddress, Table t, int sID, DatagramSocket anonSocket){
         clientSocket = clSocket;
+	this.anonSocket = anonSocket;
         table = t;
         sessionID = sID;
         try {
@@ -25,23 +26,11 @@ public class WorkerTCP implements Runnable {
             e.printStackTrace();
         }
         try {
-            anonSocket = new DatagramSocket(6666);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-
-        try {
             inFromClient = new DataInputStream(clientSocket.getInputStream());
-            outToClient = new DataOutputStream(clientSocket.getOutputStream());
+            //outToClient = new DataOutputStream(clientSocket.getOutputStream());
         } catch ( IOException e ) {
             e.printStackTrace();
         }
-    }
-
-    private void closeStreams() throws IOException{
-        inFromClient.close();
-        outToClient.close();
-        clientSocket.close();
     }
 
     @Override
@@ -60,17 +49,19 @@ public class WorkerTCP implements Runnable {
             }
             //ADD HEADER
             AnonPacket packet = new AnonPacket(bytesFromClient, sessionID, sessionID,0);
+	    System.out.println("packet " + packet.getData());
             ByteArrayOutputStream bStream = new ByteArrayOutputStream();
             ObjectOutput oo = new ObjectOutputStream(bStream);
             oo.writeObject(packet);
             oo.close();
 
             byte[] bytePacket = bStream.toByteArray();
+	    System.out.println("bytepacket " + bytePacket.length);
 
             DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, udpAddress, 6666); //// SEND REQUEST TO PEER
             anonSocket.send(dp);
-
-            closeStreams();
+	    System.out.println("packet enviado");
+	
         } catch (IOException e){
             e.printStackTrace();
         }

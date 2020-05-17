@@ -52,8 +52,9 @@ public class AnonGW {
         }
     }
     public void gwStart() throws Exception {
-        ListenTCPThread tcp = new ListenTCPThread(welcomeSocket,peers,table);
-        ListenUDPThread udp = new ListenUDPThread(targetServer,table);
+	DatagramSocket anonSocket = new DatagramSocket(6666);
+        ListenTCPThread tcp = new ListenTCPThread(welcomeSocket,peers,table,anonSocket);
+        ListenUDPThread udp = new ListenUDPThread(targetServer,table,anonSocket);
         Thread tcpThread = new Thread(tcp);
         Thread udpThread = new Thread(udp);
         tcpThread.start();

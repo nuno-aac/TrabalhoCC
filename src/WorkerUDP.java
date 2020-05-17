@@ -21,6 +21,7 @@ public class WorkerUDP implements Runnable {
             e.printStackTrace();
         }
         anonSocket = udpSocket;
+	packet = p;
         table = t;
 
     }
@@ -29,6 +30,10 @@ public class WorkerUDP implements Runnable {
         inStream.close();
         outStream.close();
         serverSocket.close();
+    }
+
+    private void closeStreamsClient(Socket s) throws IOException{
+        s.close();
     }
 
     @Override
@@ -40,11 +45,15 @@ public class WorkerUDP implements Runnable {
         byte[] fileArray;
         try {
             //IR BUSCAR A HEADER ENDEREÇO UDP DE ANON
+	    for(int j = 0; j < packet.getData().length; j++){
+	        System.out.print((char) packet.getData()[j]);
+	    }
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             AnonPacket anonPacket = (AnonPacket) iStream.readObject();
             iStream.close();
+	    System.out.println(anonPacket.getData());
             InetAddress sourceAnonAdress = null;
-            int destSessionID = 0;
+            int destSessionID = anonPacket.getDestSessionID();
             TableEntry entry = table.getFromTable(destSessionID);
             if(entry == null) {
                 try {
@@ -67,21 +76,29 @@ public class WorkerUDP implements Runnable {
                     i++;
                 }
                 //ADD HEADER
-                DatagramPacket dp = new DatagramPacket(fileArray, result, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
+		AnonPacket anonP = new AnonPacket(fileArray,0,anonPacket.getSourceSessionID(),0);
+		
+		ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+                ObjectOutput oo = new ObjectOutputStream(bStream);
+                oo.writeObject(anonP);
+                oo.close();
+
+                byte[] bytePacket = bStream.toByteArray();
+
+                DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
                 anonSocket.send(dp);
+		closeStreams();
             } else {
                 try {
-                    inStream = new DataInputStream(entry.getClientSocket().getInputStream());
                     outStream = new DataOutputStream(entry.getClientSocket().getOutputStream());
                 } catch ( IOException e ) {
                     e.printStackTrace();
                 }
                 outStream.write(anonPacket.getData(), 0, anonPacket.getData().length);// SEND REQUEST TO SERVER
                 outStream.flush();
+		closeStreamsClient(entry.getClientSocket());
             }
 
-
-            closeStreams();
         } catch (IOException | ClassNotFoundException e){
             e.printStackTrace();
         }

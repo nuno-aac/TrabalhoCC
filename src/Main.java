@@ -8,7 +8,7 @@ public class Main {
     //  EXTRA: ORDEM
     //  EXTRA: INTEGRIDADE
     public static void main(String[] args) {
-        AnonGW anongw = new AnonGW(new String[]{"-sv","10.3.3.1","-peers", "1.3.3.10"});
+        AnonGW anongw = new AnonGW(args);
         try{
             anongw.gwStart();
         } catch (Exception e){
