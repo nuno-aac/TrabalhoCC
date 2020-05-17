@@ -15,7 +15,7 @@ public class WorkerTCP implements Runnable {
     Table table;
     byte buf[] = new byte[1024];
 
-    WorkerTCP(Socket clSocket, String peerAddress, Table t, int sID){
+    WorkerTCP(Socket clSocket, String peerAddress, Table t, int sID, DatagramSocket udpSocket){
         clientSocket = clSocket;
         table = t;
         sessionID = sID;
@@ -24,12 +24,7 @@ public class WorkerTCP implements Runnable {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        try {
-            anonSocket = new DatagramSocket(6666);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-
+        anonSocket = udpSocket;
         try {
             inFromClient = new DataInputStream(clientSocket.getInputStream());
             outToClient = new DataOutputStream(clientSocket.getOutputStream());
