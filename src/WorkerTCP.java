@@ -61,7 +61,7 @@ public class WorkerTCP implements Runnable {
 
             DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, udpAddress, 6666); // SEND REQUEST TO PEER
             anonSocket.send(dp);
-	        System.out.println("packet enviado");
+	        System.out.println("Request packet enviado");
 
         } catch (IOException e){
             e.printStackTrace();

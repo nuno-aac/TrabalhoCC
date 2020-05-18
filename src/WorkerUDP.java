@@ -50,6 +50,7 @@ public class WorkerUDP implements Runnable {
             }
             res.add(fragment);
         }
+        System.out.println("Fragmented " + fileArray.length + " bytes into " +  res.size() + "parts");
         return res;
     }
 
@@ -97,6 +98,7 @@ public class WorkerUDP implements Runnable {
                 ArrayList<byte[]> fragmented = fragmentResponse(fileArray);
                 for(int numPacket = 0; numPacket < fragmented.size(); numPacket++){
                     AnonPacket anonP;
+                    System.out.println(("Sending Packet " + numPacket));
                     if(fragmented.size() - 1 != numPacket)
                         anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, false);
                     else
@@ -119,8 +121,10 @@ public class WorkerUDP implements Runnable {
                 } catch ( IOException e ) {
                     e.printStackTrace();
                 }
+                System.out.println("Received response packet number" + anonPacket.getNumPacket());
                 entry.addPacket(anonPacket);
                 if(entry.getPackets().isFullyReceived()) {
+                    System.out.println("I have all response packets!");
                     outStream.write(entry.getPackets().getData(), 0, entry.getPackets().getData().length);// SEND REQUEST TO SERVER
                     outStream.flush();
                     closeStreamsClient(entry.getClientSocket());
