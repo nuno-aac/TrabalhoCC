@@ -45,12 +45,15 @@ public class WorkerTCP implements Runnable {
             table.addToTable(sessionID, new TableEntry(clientSocket,udpAddress,sessionID));// ADD SOCKET TO TABLE
 
             result = inFromClient.read(bytesFromClient, 0, 1024); // GET REQUEST FROM CLIENT
-            for (int j = 0; j < result; j++) {
+            byte[] resultArray = new byte[result];
+	    for (int j = 0; j < result; j++) {
                 System.out.print((char) bytesFromClient[j]);
+		resultArray[j] = bytesFromClient[j];
             }
+	    
             //
             //ADD HEADER
-            AnonPacket packet = new AnonPacket(bytesFromClient, sessionID, sessionID,0,true);
+            AnonPacket packet = new AnonPacket(resultArray, sessionID, sessionID,0,true);
             ByteArrayOutputStream bStream = new ByteArrayOutputStream();
             ObjectOutput oo = new ObjectOutputStream(bStream);
             oo.writeObject(packet);

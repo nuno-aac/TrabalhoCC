@@ -63,17 +63,17 @@ public class WorkerUDP implements Runnable {
         byte[] fileArray;
         try {
             //IR BUSCAR A HEADER ENDEREÇO UDP DE ANON
-	    for(int j = 0; j < packet.getData().length; j++){
-	        System.out.print((char) packet.getData()[j]);
-	    }
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             AnonPacket anonPacket = (AnonPacket) iStream.readObject();
+	    System.out.println("Received response packet number" + anonPacket.getNumPacket());
             iStream.close();
-	        System.out.println(anonPacket.getData());
+	    for(int j = 0; j < anonPacket.getData().length; j++){
+	        System.out.print((char) anonPacket.getData()[j]);
+	    }
             InetAddress sourceAnonAdress = packet.getAddress();
             int destSessionID = anonPacket.getDestSessionID();
             TableEntry entry = table.getFromTable(destSessionID);
-
+	    
             if(entry == null) {
                 try {
                     inStream = new DataInputStream(serverSocket.getInputStream());
@@ -98,12 +98,15 @@ public class WorkerUDP implements Runnable {
                 ArrayList<byte[]> fragmented = fragmentResponse(fileArray);
                 for(int numPacket = 0; numPacket < fragmented.size(); numPacket++){
                     AnonPacket anonP;
-                    System.out.println(("Sending Packet " + numPacket));
-                    if(fragmented.size() - 1 != numPacket)
+                    //System.out.println(("Sending Packet " + numPacket));
+                    if(fragmented.size() - 1 != numPacket){
+			System.out.println(("Sending Packet " + numPacket));
                         anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, false);
-                    else
+                    }else{
+			System.out.println(("Sending last Packet " + numPacket));
                         anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, true);
-
+		    }
+		    System.out.println("biroca grande " + anonP.getNumPacket());
                     ByteArrayOutputStream bStream = new ByteArrayOutputStream();
                     ObjectOutput oo = new ObjectOutputStream(bStream);
                     oo.writeObject(anonP);
@@ -114,14 +117,14 @@ public class WorkerUDP implements Runnable {
                     DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
                     anonSocket.send(dp);
                 }
-		        closeStreams();
+		closeStreams();
             } else {
                 try {
                     outStream = new DataOutputStream(entry.getClientSocket().getOutputStream());
                 } catch ( IOException e ) {
                     e.printStackTrace();
                 }
-                System.out.println("Received response packet number" + anonPacket.getNumPacket());
+                
                 entry.addPacket(anonPacket);
                 if(entry.getPackets().isFullyReceived()) {
                     System.out.println("I have all response packets!");

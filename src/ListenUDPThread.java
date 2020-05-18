@@ -18,15 +18,17 @@ public class ListenUDPThread implements Runnable{
     }
     @Override
     public void run() {
+	DatagramPacket dp;
         while(true) {
             try {
-                DatagramPacket dp = new DatagramPacket(buf, buf.length);
+                dp = new DatagramPacket(buf, buf.length);
                 anonSocket.receive(dp);
 		        System.out.println("packet recebido");
 
                 Thread t = new Thread(new WorkerUDP(serverSocket, anonSocket, dp, table));
                 workers.add(t);
                 t.start();
+		buf = new byte[1024];
             } catch (IOException e) {
                 e.printStackTrace();
             }
