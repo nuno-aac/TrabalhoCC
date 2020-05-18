@@ -10,6 +10,7 @@ public class AnonGW {
     private String targetServer;
     ArrayList<String> peers;
     Table table;
+    boolean canRun;
     private static final int PORT_NUM = 80;
 
     private boolean parseArgs(String[] args){
@@ -44,20 +45,26 @@ public class AnonGW {
             try {
                 welcomeSocket = new ServerSocket(PORT_NUM);
                 table = new Table();
+                canRun = true;
             } catch (IOException e) {
                 System.out.println(Arrays.toString(e.getStackTrace()));
             }
         } else {
             System.out.println("Argumentos inválidos!");
+            canRun = false;
         }
     }
     public void gwStart() throws Exception {
-	DatagramSocket anonSocket = new DatagramSocket(6666);
-        ListenTCPThread tcp = new ListenTCPThread(welcomeSocket,peers,table,anonSocket);
-        ListenUDPThread udp = new ListenUDPThread(targetServer,table,anonSocket);
-        Thread tcpThread = new Thread(tcp);
-        Thread udpThread = new Thread(udp);
-        tcpThread.start();
-        udpThread.start();
+        if(this.canRun) {
+            DatagramSocket anonSocket = new DatagramSocket(6666);
+            ListenTCPThread tcp = new ListenTCPThread(welcomeSocket, peers, table, anonSocket);
+            ListenUDPThread udp = new ListenUDPThread(targetServer, table, anonSocket);
+            Thread tcpThread = new Thread(tcp);
+            Thread udpThread = new Thread(udp);
+            tcpThread.start();
+            udpThread.start();
+        } else {
+            System.out.println("Configuração inválida!");
+        }
     }
 }

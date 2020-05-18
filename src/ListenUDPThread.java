@@ -6,7 +6,6 @@ public class ListenUDPThread implements Runnable{
     String serverSocket;
     byte buf[];
     Table table;
-    DatagramSocket anonSocket;
     ArrayList<Thread> workers;
     DatagramSocket anonSocket;
 

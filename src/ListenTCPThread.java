@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 public class ListenTCPThread implements Runnable{
     ServerSocket welcomeSocket;
-    DatagramSocket anonSocket;
     ArrayList<String> peers;
     ArrayList<Thread> workers;
     Table table;
@@ -19,7 +18,6 @@ public class ListenTCPThread implements Runnable{
         peers = peerList;
         table = t;
         workers = new ArrayList<>();
-	this.anonSocket = anonSocket;
     }
     @Override
     public void run() {
