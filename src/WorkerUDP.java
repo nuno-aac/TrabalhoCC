@@ -41,7 +41,6 @@ public class WorkerUDP implements Runnable {
         int byteNum;
         int fragmentSize;
         byte[] fragment;
-        byte[] bytePacket;
         for (byteNum = 0; byteNum < fileArray.length; byteNum += 512) {
             fragment = new byte[512];
             fragmentSize = Math.min(fileArray.length - byteNum, 512);
@@ -54,85 +53,90 @@ public class WorkerUDP implements Runnable {
         return res;
     }
 
-    @Override
-    public void run() {
+    private void handleRequest(AnonPacket anonPacket) throws IOException {
         int result, i;
         i = 0;
         byte[] currentByte = new byte[1];
         byte[] bytesFromClient = new byte[4096];
         byte[] fileArray;
         try {
+            inStream = new DataInputStream(serverSocket.getInputStream());
+            outStream = new DataOutputStream(serverSocket.getOutputStream());
+        } catch ( IOException e ) {
+            e.printStackTrace();
+        }
+        outStream.write(anonPacket.getData(), 0, anonPacket.getData().length);// SEND REQUEST TO SERVER
+        outStream.flush();
+
+        responseFromServer = new ArrayList<>(); // GET RESPONSE FROM SERVER
+        while ((result = inStream.read(currentByte, 0, 1)) > -1) {
+            responseFromServer.add(currentByte[0]);
+            System.out.print((char) currentByte[0]);
+        }
+        fileArray = new byte[responseFromServer.size()];
+        for (byte b : responseFromServer) {
+            fileArray[i] = b;
+            i++;
+        }
+        //FRAGMENT RESPONSE
+        ArrayList<byte[]> fragmented = fragmentResponse(fileArray);
+        for(int numPacket = 0; numPacket < fragmented.size(); numPacket++){
+            AnonPacket anonP;
+            //System.out.println(("Sending Packet " + numPacket));
+            if(fragmented.size() - 1 != numPacket){
+                System.out.println(("Sending Packet " + numPacket));
+                anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, false);
+            }else{
+                System.out.println(("Sending last Packet " + numPacket));
+                anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, true);
+            }
+            System.out.println("biroca grande " + anonP.getNumPacket());
+            ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+            ObjectOutput oo = new ObjectOutputStream(bStream);
+            oo.writeObject(anonP);
+            oo.close();
+
+            byte [] bytePacket = bStream.toByteArray();
+
+            DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
+            anonSocket.send(dp);
+        }
+        closeStreams();
+    }
+
+    private void handleResponse(TableEntry entry, AnonPacket anonPacket) throws IOException {
+        try {
+            outStream = new DataOutputStream(entry.getClientSocket().getOutputStream());
+        } catch ( IOException e ) {
+            e.printStackTrace();
+        }
+
+        entry.addPacket(anonPacket);
+        if(entry.getPackets().isFullyReceived()) {
+            System.out.println("I have all response packets!");
+            outStream.write(entry.getPackets().getData(), 0, entry.getPackets().getData().length);// SEND REQUEST TO SERVER
+            outStream.flush();
+            closeStreamsClient(entry.getClientSocket());
+            table.removeFromTable(anonPacket.getDestSessionID());
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
             //IR BUSCAR A HEADER ENDEREÇO UDP DE ANON
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             AnonPacket anonPacket = (AnonPacket) iStream.readObject();
-	    System.out.println("Received response packet number" + anonPacket.getNumPacket());
+	        System.out.println("Received response packet number" + anonPacket.getNumPacket());
             iStream.close();
-	    for(int j = 0; j < anonPacket.getData().length; j++){
-	        System.out.print((char) anonPacket.getData()[j]);
-	    }
             InetAddress sourceAnonAdress = packet.getAddress();
             int destSessionID = anonPacket.getDestSessionID();
             TableEntry entry = table.getFromTable(destSessionID);
 	    
             if(entry == null) {
-                try {
-                    inStream = new DataInputStream(serverSocket.getInputStream());
-                    outStream = new DataOutputStream(serverSocket.getOutputStream());
-                } catch ( IOException e ) {
-                    e.printStackTrace();
-                }
-                outStream.write(anonPacket.getData(), 0, anonPacket.getData().length);// SEND REQUEST TO SERVER
-                outStream.flush();
-
-                responseFromServer = new ArrayList<>(); // GET RESPONSE FROM SERVER
-                while ((result = inStream.read(currentByte, 0, 1)) > -1) {
-                    responseFromServer.add(currentByte[0]);
-                    System.out.print((char) currentByte[0]);
-                }
-                fileArray = new byte[responseFromServer.size()];
-                for (byte b : responseFromServer) {
-                    fileArray[i] = b;
-                    i++;
-                }
-                //FRAGMENT RESPONSE
-                ArrayList<byte[]> fragmented = fragmentResponse(fileArray);
-                for(int numPacket = 0; numPacket < fragmented.size(); numPacket++){
-                    AnonPacket anonP;
-                    //System.out.println(("Sending Packet " + numPacket));
-                    if(fragmented.size() - 1 != numPacket){
-			System.out.println(("Sending Packet " + numPacket));
-                        anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, false);
-                    }else{
-			System.out.println(("Sending last Packet " + numPacket));
-                        anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, true);
-		    }
-		    System.out.println("biroca grande " + anonP.getNumPacket());
-                    ByteArrayOutputStream bStream = new ByteArrayOutputStream();
-                    ObjectOutput oo = new ObjectOutputStream(bStream);
-                    oo.writeObject(anonP);
-                    oo.close();
-
-                    byte [] bytePacket = bStream.toByteArray();
-
-                    DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
-                    anonSocket.send(dp);
-                }
-		closeStreams();
+                handleRequest(anonPacket);
             } else {
-                try {
-                    outStream = new DataOutputStream(entry.getClientSocket().getOutputStream());
-                } catch ( IOException e ) {
-                    e.printStackTrace();
-                }
-                
-                entry.addPacket(anonPacket);
-                if(entry.getPackets().isFullyReceived()) {
-                    System.out.println("I have all response packets!");
-                    outStream.write(entry.getPackets().getData(), 0, entry.getPackets().getData().length);// SEND REQUEST TO SERVER
-                    outStream.flush();
-                    closeStreamsClient(entry.getClientSocket());
-                    table.removeFromTable(destSessionID);
-                }
+                handleResponse(entry,anonPacket);
             }
 
         } catch (IOException | ClassNotFoundException e){

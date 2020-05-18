@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="e76fd432-4559-4069-96d1-161ce64a92e0" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/trabalhoCC/WorkerTCP.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/trabalhoCC/WorkerTCP.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/trabalhoCC/WorkerUDP.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/trabalhoCC/WorkerUDP.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/WorkerTCP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/WorkerTCP.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/WorkerUDP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/WorkerUDP.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
