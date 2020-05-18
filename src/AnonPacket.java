@@ -5,12 +5,14 @@ public class AnonPacket implements Serializable {
     int numPacket;
     int sourceSessionID;
     int destSessionID;
+    boolean isLast;
 
-    public AnonPacket(byte[] packetData, int sourceSession, Integer destSession, int num){
+    public AnonPacket(byte[] packetData, Integer sourceSession, Integer destSession, int num, boolean last){
         data = packetData;
         sourceSessionID = sourceSession;
         destSessionID = destSession;
         numPacket = num;
+        isLast = last;
     }
 
     public byte[] getData() {
@@ -27,5 +29,9 @@ public class AnonPacket implements Serializable {
 
     public int getNumPacket() {
         return numPacket;
+    }
+
+    public boolean isLast(){
+        return isLast;
     }
 }

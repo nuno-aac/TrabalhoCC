@@ -36,6 +36,23 @@ public class WorkerUDP implements Runnable {
         s.close();
     }
 
+    private ArrayList<byte[]> fragmentResponse(byte[] fileArray) {
+        ArrayList<byte[]> res = new ArrayList<>();
+        int byteNum;
+        int fragmentSize;
+        byte[] fragment;
+        byte[] bytePacket;
+        for (byteNum = 0; byteNum < fileArray.length; byteNum += 512) {
+            fragment = new byte[512];
+            fragmentSize = Math.min(fileArray.length - byteNum, 512);
+            for (int j = 0; j < fragmentSize; j++) {
+                fragment[j] = fileArray[byteNum + j];
+            }
+            res.add(fragment);
+        }
+        return res;
+    }
+
     @Override
     public void run() {
         int result, i;
@@ -51,10 +68,11 @@ public class WorkerUDP implements Runnable {
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
             AnonPacket anonPacket = (AnonPacket) iStream.readObject();
             iStream.close();
-	    System.out.println(anonPacket.getData());
-            InetAddress sourceAnonAdress = null;
+	        System.out.println(anonPacket.getData());
+            InetAddress sourceAnonAdress = packet.getAddress();
             int destSessionID = anonPacket.getDestSessionID();
             TableEntry entry = table.getFromTable(destSessionID);
+
             if(entry == null) {
                 try {
                     inStream = new DataInputStream(serverSocket.getInputStream());
@@ -75,28 +93,39 @@ public class WorkerUDP implements Runnable {
                     fileArray[i] = b;
                     i++;
                 }
-                //ADD HEADER
-		AnonPacket anonP = new AnonPacket(fileArray,0,anonPacket.getSourceSessionID(),0);
-		
-		ByteArrayOutputStream bStream = new ByteArrayOutputStream();
-                ObjectOutput oo = new ObjectOutputStream(bStream);
-                oo.writeObject(anonP);
-                oo.close();
+                //FRAGMENT RESPONSE
+                ArrayList<byte[]> fragmented = fragmentResponse(fileArray);
+                for(int numPacket = 0; numPacket < fragmented.size(); numPacket++){
+                    AnonPacket anonP;
+                    if(fragmented.size() - 1 != numPacket)
+                        anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, false);
+                    else
+                        anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, true);
 
-                byte[] bytePacket = bStream.toByteArray();
+                    ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+                    ObjectOutput oo = new ObjectOutputStream(bStream);
+                    oo.writeObject(anonP);
+                    oo.close();
 
-                DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
-                anonSocket.send(dp);
-		closeStreams();
+                    byte [] bytePacket = bStream.toByteArray();
+
+                    DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
+                    anonSocket.send(dp);
+                }
+		        closeStreams();
             } else {
                 try {
                     outStream = new DataOutputStream(entry.getClientSocket().getOutputStream());
                 } catch ( IOException e ) {
                     e.printStackTrace();
                 }
-                outStream.write(anonPacket.getData(), 0, anonPacket.getData().length);// SEND REQUEST TO SERVER
-                outStream.flush();
-		closeStreamsClient(entry.getClientSocket());
+                entry.addPacket(anonPacket);
+                if(entry.getPackets().isFullyReceived()) {
+                    outStream.write(entry.getPackets().getData(), 0, entry.getPackets().getData().length);// SEND REQUEST TO SERVER
+                    outStream.flush();
+                    closeStreamsClient(entry.getClientSocket());
+                    table.removeFromTable(destSessionID);
+                }
             }
 
         } catch (IOException | ClassNotFoundException e){

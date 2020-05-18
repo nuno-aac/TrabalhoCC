@@ -48,20 +48,20 @@ public class WorkerTCP implements Runnable {
             for (int j = 0; j < result; j++) {
                 System.out.print((char) bytesFromClient[j]);
             }
+            //
             //ADD HEADER
-            AnonPacket packet = new AnonPacket(bytesFromClient, sessionID, sessionID,0);
-	    System.out.println("packet " + packet.getData());
+            AnonPacket packet = new AnonPacket(bytesFromClient, sessionID, sessionID,0,true);
             ByteArrayOutputStream bStream = new ByteArrayOutputStream();
             ObjectOutput oo = new ObjectOutputStream(bStream);
             oo.writeObject(packet);
             oo.close();
 
             byte[] bytePacket = bStream.toByteArray();
-	    System.out.println("bytepacket " + bytePacket.length);
+	        System.out.println("bytepacket " + bytePacket.length);
 
-            DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, udpAddress, 6666); //// SEND REQUEST TO PEER
+            DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, udpAddress, 6666); // SEND REQUEST TO PEER
             anonSocket.send(dp);
-	    System.out.println("packet enviado");
+	        System.out.println("packet enviado");
 
         } catch (IOException e){
             e.printStackTrace();

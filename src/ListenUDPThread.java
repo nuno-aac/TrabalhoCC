@@ -15,7 +15,6 @@ public class ListenUDPThread implements Runnable{
         anonSocket = udpSocket;
         buf = new byte[1024];
         workers = new ArrayList<>();
-	this.anonSocket = anonSocket;
     }
     @Override
     public void run() {
@@ -23,7 +22,7 @@ public class ListenUDPThread implements Runnable{
             try {
                 DatagramPacket dp = new DatagramPacket(buf, buf.length);
                 anonSocket.receive(dp);
-		System.out.println("packet recebido");
+		        System.out.println("packet recebido");
 
                 Thread t = new Thread(new WorkerUDP(serverSocket, anonSocket, dp, table));
                 workers.add(t);
