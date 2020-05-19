@@ -1,6 +1,7 @@
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoHelper {
     private static Cipher cipher = null;
@@ -11,7 +12,8 @@ public class CryptoHelper {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("DESede");
         // keysize must be equal to 112 or 168 for this provider
         keyGenerator.init(168);
-        this.secretKey = keyGenerator.generateKey();
+	this.secretKey = new SecretKeySpec(this.turnToByte("ﾌﾆ|￟ﾼﾧﾒ￥￸ﾭ/OJm￱￲/ￓ)ﾡEￓ"), "DESede"); 
+        //this.secretKey = keyGenerator.generateKey();
         cipher = Cipher.getInstance("DESede");
     }
 

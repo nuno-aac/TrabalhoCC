@@ -11,13 +11,15 @@ public class ListenTCPThread implements Runnable{
     Table table;
     int sessionID;
     DatagramSocket anonSocket;
+    CryptoHelper ch;
 
-    public ListenTCPThread(ServerSocket serverSocket, ArrayList<String> peerList, Table t, DatagramSocket udpSocket){
+    public ListenTCPThread(ServerSocket serverSocket, ArrayList<String> peerList, Table t, DatagramSocket udpSocket, CryptoHelper chelper){
         welcomeSocket = serverSocket;
         anonSocket = udpSocket;
         peers = peerList;
         table = t;
         workers = new ArrayList<>();
+	ch = chelper;
     }
     @Override
     public void run() {
@@ -30,7 +32,7 @@ public class ListenTCPThread implements Runnable{
                 e.printStackTrace();
             }
 
-            Thread t = new Thread(new WorkerTCP(clientSocket,peers.get(0), table, sessionID, anonSocket));
+            Thread t = new Thread(new WorkerTCP(clientSocket,peers.get(0), table, sessionID, anonSocket,ch));
             sessionID++;
             workers.add(t);
             t.start();

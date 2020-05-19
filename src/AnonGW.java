@@ -55,10 +55,11 @@ public class AnonGW {
         }
     }
     public void gwStart() throws Exception {
+	CryptoHelper ch = new CryptoHelper();
         if(this.canRun) {
             DatagramSocket anonSocket = new DatagramSocket(6666);
-            ListenTCPThread tcp = new ListenTCPThread(welcomeSocket, peers, table, anonSocket);
-            ListenUDPThread udp = new ListenUDPThread(targetServer, table, anonSocket);
+            ListenTCPThread tcp = new ListenTCPThread(welcomeSocket, peers, table, anonSocket,ch);
+            ListenUDPThread udp = new ListenUDPThread(targetServer, table, anonSocket,ch);
             Thread tcpThread = new Thread(tcp);
             Thread udpThread = new Thread(udp);
             tcpThread.start();

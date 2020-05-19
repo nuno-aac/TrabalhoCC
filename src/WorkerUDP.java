@@ -13,8 +13,9 @@ public class WorkerUDP implements Runnable {
     DataOutputStream outStream;
     //UDP
     byte buf[] = new byte[1024];
+    CryptoHelper ch;
 
-    WorkerUDP(String svIP, DatagramSocket udpSocket, DatagramPacket p, Table t){
+    WorkerUDP(String svIP, DatagramSocket udpSocket, DatagramPacket p, Table t, CryptoHelper chelper){
         try {
             serverSocket = new Socket(svIP,80);
         } catch (IOException e) {
@@ -23,7 +24,7 @@ public class WorkerUDP implements Runnable {
         anonSocket = udpSocket;
 	packet = p;
         table = t;
-
+	ch = chelper;
     }
 
     private void closeStreams() throws IOException{
@@ -65,6 +66,8 @@ public class WorkerUDP implements Runnable {
         } catch ( IOException e ) {
             e.printStackTrace();
         }
+
+	
         outStream.write(anonPacket.getData(), 0, anonPacket.getData().length);// SEND REQUEST TO SERVER
         outStream.flush();
 
@@ -98,8 +101,15 @@ public class WorkerUDP implements Runnable {
 
             byte [] bytePacket = bStream.toByteArray();
 
-            DatagramPacket dp = new DatagramPacket(bytePacket, bytePacket.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
-            anonSocket.send(dp);
+	    try{
+		byte[] fragmentEncrypted = ch.runEncrypts(bytePacket);
+
+                DatagramPacket dp = new DatagramPacket(fragmentEncrypted, fragmentEncrypted.length, packet.getAddress(), 6666); //MUDARRRRRRR // SEND RESPONSE TO PEER
+                anonSocket.send(dp);
+	    }
+	    catch(Exception e){
+		System.out.println("Something went wrong encrypts response udp");
+	    }
         }
         closeStreams();
     }
@@ -114,7 +124,7 @@ public class WorkerUDP implements Runnable {
         entry.addPacket(anonPacket);
         if(entry.getPackets().isFullyReceived()) {
             System.out.println("I have all response packets!");
-            outStream.write(entry.getPackets().getData(), 0, entry.getPackets().getData().length);// SEND REQUEST TO SERVER
+            outStream.write(entry.getPackets().getData(), 0, entry.getPackets().getData().length);// SEND RESPONSE TO CLIENT
             outStream.flush();
             closeStreamsClient(entry.getClientSocket());
             table.removeFromTable(anonPacket.getDestSessionID());
@@ -124,8 +134,14 @@ public class WorkerUDP implements Runnable {
     @Override
     public void run() {
         try {
+	    System.out.println("tamanhao " + packet.getLength());
+	    byte[] responseBytes = new byte[packet.getLength()];
+	    for(int i = 0; i < packet.getLength(); i++){
+	    	responseBytes[i] = packet.getData()[i];
+	    }
+	    byte[] decryptedPacket = ch.runDecrypts(responseBytes);
             //IR BUSCAR A HEADER ENDEREÇO UDP DE ANON
-            ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(packet.getData()));
+            ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(decryptedPacket));
             AnonPacket anonPacket = (AnonPacket) iStream.readObject();
 	        System.out.println("Received response packet number" + anonPacket.getNumPacket());
             iStream.close();
@@ -141,6 +157,8 @@ public class WorkerUDP implements Runnable {
 
         } catch (IOException | ClassNotFoundException e){
             e.printStackTrace();
-        }
+        } catch (Exception e){
+	    System.out.println(e.toString());
+	}
     }
 }
