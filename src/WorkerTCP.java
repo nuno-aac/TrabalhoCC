@@ -66,7 +66,6 @@ public class WorkerTCP implements Runnable {
 		
 	    try{
 	        byte[] encryptedPacket = ch.runEncrypts(bytePacket);
-		System.out.println("tamanho " + encryptedPacket.length);
 		DatagramPacket dp = new DatagramPacket(encryptedPacket, encryptedPacket.length, udpAddress, 6666); // SEND REQUEST TO PEER
                 anonSocket.send(dp);
 	    }

@@ -85,7 +85,6 @@ public class WorkerUDP implements Runnable {
         ArrayList<byte[]> fragmented = fragmentResponse(fileArray);
         for(int numPacket = 0; numPacket < fragmented.size(); numPacket++){
             AnonPacket anonP;
-            //System.out.println(("Sending Packet " + numPacket));
             if(fragmented.size() - 1 != numPacket){
                 System.out.println(("Sending Packet " + numPacket));
                 anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, false);
@@ -93,7 +92,6 @@ public class WorkerUDP implements Runnable {
                 System.out.println(("Sending last Packet " + numPacket));
                 anonP = new AnonPacket(fragmented.get(numPacket),0,anonPacket.getSourceSessionID(),numPacket, true);
             }
-            System.out.println("biroca grande " + anonP.getNumPacket());
             ByteArrayOutputStream bStream = new ByteArrayOutputStream();
             ObjectOutput oo = new ObjectOutputStream(bStream);
             oo.writeObject(anonP);
@@ -134,7 +132,6 @@ public class WorkerUDP implements Runnable {
     @Override
     public void run() {
         try {
-	    System.out.println("tamanhao " + packet.getLength());
 	    byte[] responseBytes = new byte[packet.getLength()];
 	    for(int i = 0; i < packet.getLength(); i++){
 	    	responseBytes[i] = packet.getData()[i];
